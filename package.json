@@ -1,0 +1,10 @@
+{
+  "name": "npup-photo-pearls",
+  "description": "home rolled photopearls killer",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "pngjs": "0.4.0-alpha"
+    , "commander": "1.1.1"
+  }
+}
