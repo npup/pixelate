@@ -1,7 +1,7 @@
 var fs = require("fs")
   , prg = require("commander")
   , PNG = require("pngjs").PNG
-  , PPng = require("./ppng");
+  , PPng = require("./lib/ppng");
 
 var palettes = {
   "gray": {
