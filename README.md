@@ -1,0 +1,4 @@
+pixelate
+========
+
+Pixelate pngs
