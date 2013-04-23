@@ -3,26 +3,28 @@ var fs = require("fs")
   , PNG = require("pngjs").PNG
   , PPng = require("./lib/ppng");
 
+
+
 var palettes = {
   "gray": {
-    "black": [0, 0, 0]
-    , "dark gray1": [32, 32, 32]
-    , "dark gray2": [64, 64, 64]
-    , "dark gray3": [96, 96, 96]
-    , "medium gray1": [127, 127, 127]
-    , "medium gray2": [168, 168, 168]
-    , "medium gray3": [180, 180, 180]
-    , "light gray": [192, 192, 192]
-    , "very light gray": [224, 224, 224]
-    , "white": [255, 255, 255]
-    , "blue": [40, 50, 90]
+    "black": [0, 0, 0, "a"]
+    , "dark-gray1": [32, 32, 32, "b"]
+    , "dark-gray2": [64, 64, 64, "c"]
+    , "dark-gray3": [96, 96, 96, "d"]
+    , "medium-gray1": [127, 127, 127, "e"]
+    , "medium-gray2": [168, 168, 168, "f"]
+    , "medium-gray3": [180, 180, 180, "g"]
+    , "light-gray": [192, 192, 192, "g"]
+    , "very-light-gray": [224, 224, 224, "i"]
+    , "white": [255, 255, 255, "j"]
+    , "blue": [40, 50, 90, "k"]
   }
   , "blue": {
-    "blue-dark": [64, 64, 248]
-    , "blue-medium-dark": [128, 128, 248]
-    , "blue-medium": [168, 168, 248]
-    , "blue-light": [192, 192, 248]
-    , "blue-very-light": [224, 224, 248]
+    "blue-dark": [64, 64, 248, "0"]
+    , "blue-medium-dark": [128, 128, 248, "1"]
+    , "blue-medium": [168, 168, 248, "2"]
+    , "blue-light": [192, 192, 248, "3"]
+    , "blue-very-light": [224, 224, 248, "4"]
   }
 };
 
@@ -31,6 +33,7 @@ prg
   .option("-f, --file [file]", "png file to process", "image.png")
   .option("-r, --ratio [ratio]", "pixel ratio", parseInt, 1)
   .option("-o, --out [out]", "output file name")
+  .option("-h, --html", "pattern as HTML file")
   .parse(process.argv);
 
 var argErrors = [];
@@ -62,6 +65,7 @@ var options = {
   "ratio": prg.ratio
   , "file": prg.file
   , "out": prg.out
+  , "html": "html" in prg
 };
 
 // choose palette and do processing
@@ -71,6 +75,7 @@ var options = {
     prg.choose(choices, function (idx) {
     options.palette = palettes[choices[idx]];
     run(options, function (ppng) {
+      //console.log(JSON.stringify(ppng, ["colorNames"], " "));
       process.exit();
     });
   });  
@@ -104,24 +109,31 @@ function processPPng(ppng, palette, cb) {
         });
         continue;
       }
-      ppng.setPixel(x, y, {
-        "r": closest.rgb[0]
-        , "g": closest.rgb[1]
-        , "b": closest.rgb[2]
-      });
+      var data = {
+        "rgb": {
+          "r": closest.rgb[0]
+          , "g": closest.rgb[1]
+          , "b": closest.rgb[2]
+        }
+        , "name": closest.name
+        , "symbol": closest.symbol
+      };
+      ppng.setPixel(x, y, data);
     }
   }
-  ppng.write(options.out, cb);
+  ppng.write(options.out, cb, options.html);
 }
 
 function findClosest(rgba, palette) {
-  var diff = Number.MAX_VALUE, tmp, candidate, result;
+  var diff = Number.MAX_VALUE, tmp, result;
   for (var key in palette) {
-    (tmp = difference([rgba.r, rgba.g, rgba.b], (candidate = palette[key]))) < diff && (result = key, diff = tmp);
+    (tmp = difference([rgba.r, rgba.g, rgba.b], palette[key])) < diff && (result = key, diff = tmp);
   }
+  var code = palette[result];
   return {
     "name": result
-    , "rgb": palette[result]
+    , "rgb": code
+    , "symbol": code[3]
   };
 }
 
