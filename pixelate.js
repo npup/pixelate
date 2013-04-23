@@ -34,6 +34,7 @@ prg
   .option("-r, --ratio [ratio]", "pixel ratio", parseInt, 1)
   .option("-o, --out [out]", "output file name")
   .option("-h, --html", "pattern as HTML file")
+  .option("-n, --natural", "use natural (closest) color instead of using a palette constraint")
   .parse(process.argv);
 
 var argErrors = [];
@@ -66,20 +67,9 @@ var options = {
   , "file": prg.file
   , "out": prg.out
   , "html": "html" in prg
+  , "natural": "natural" in prg
 };
 
-// choose palette and do processing
-(function () {
-  console.log("Choose palette:");
-  var choices = Object.keys(palettes);
-    prg.choose(choices, function (idx) {
-    options.palette = palettes[choices[idx]];
-    run(options, function (ppng) {
-      //console.log(JSON.stringify(ppng, ["colorNames"], " "));
-      process.exit();
-    });
-  });  
-})();
 
 
 function run(options, cb) {
@@ -95,14 +85,39 @@ function run(options, cb) {
   });
 }
 
+function do_run(options) {
+  run(options, function (ppng) {
+    process.exit();
+  });
+}
+// choose palette and do processing
+(function () {
+  if (options.natural) {
+    do_run(options);
+    return;
+  }
+  console.log("Choose palette:");
+  var choices = Object.keys(palettes);
+  prg.choose(choices, function (idx) {
+    options.palette = palettes[choices[idx]];
+    do_run(options);
+  });
+})();
+
+
 function processPPng(ppng, palette, cb) {
   var width = Math.ceil(ppng.getWidth())
     , height = Math.ceil(ppng.getHeight())
-    , rgba, closest;
+    , rgba, closest = {};
   for (var y = 0; y < height; ++y) {
     for (var x = 0; x < width; ++x) {
       rgba = ppng.getPixel(x, y);
-      closest = findClosest(rgba, palette);
+      if (options.natural) {
+        closest = {"name": "-original-", "rgb": [rgba.r, rgba.g , rgba.b ,"+"], "symbol": "_"};
+      }
+      else {
+        closest = findClosest(rgba, palette);
+      }
       if (!closest.rgb) {
         ppng.setPixel(x, y, {
            "a": 128
