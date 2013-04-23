@@ -3,21 +3,19 @@ var fs = require("fs")
   , PNG = require("pngjs").PNG
   , PPng = require("./lib/ppng");
 
-
-
 var palettes = {
   "gray": {
-    "black": [0, 0, 0, "a"]
-    , "dark-gray1": [32, 32, 32, "b"]
-    , "dark-gray2": [64, 64, 64, "c"]
-    , "dark-gray3": [96, 96, 96, "d"]
-    , "medium-gray1": [127, 127, 127, "e"]
-    , "medium-gray2": [168, 168, 168, "f"]
-    , "medium-gray3": [180, 180, 180, "g"]
-    , "light-gray": [192, 192, 192, "g"]
-    , "very-light-gray": [224, 224, 224, "i"]
-    , "white": [255, 255, 255, "j"]
-    , "blue": [40, 50, 90, "k"]
+    "black": PPng.Color.create([0, 0, 0], "black", "a")
+    , "dark-gray1": PPng.Color.create([32, 32, 32], "dark-gray1", "b")
+    , "dark-gray2": PPng.Color.create([64, 64, 64], "dark-gray2", "c")
+    , "dark-gray3": PPng.Color.create([96, 96, 96], "dark-gray3", "d")
+    , "medium-gray1": PPng.Color.create([127, 127, 127], "medium-gray1", "e")
+    , "medium-gray2": PPng.Color.create([168, 168, 168], "medium-gray2", "f")
+    , "medium-gray3": PPng.Color.create([180, 180, 180], "medium-gray3", "g")
+    , "light-gray": PPng.Color.create([192, 192, 192], "light-gray", "g")
+    , "very-light-gray": PPng.Color.create([224, 224, 224], "very-light-gray", "i")
+    , "white": PPng.Color.create([255, 255, 255], "white", "j")
+    , "blue": PPng.Color.create([40, 50, 90], "blue", "k")
   }
   , "blue": {
     "blue-dark": [64, 64, 248, "0"]
@@ -90,12 +88,15 @@ function do_run(options) {
     process.exit();
   });
 }
-// choose palette and do processing
+
+
 (function () {
+  // use natural colors
   if (options.natural) {
     do_run(options);
     return;
   }
+  // choose palette and do processing
   console.log("Choose palette:");
   var choices = Object.keys(palettes);
   prg.choose(choices, function (idx) {
@@ -113,27 +114,13 @@ function processPPng(ppng, palette, cb) {
     for (var x = 0; x < width; ++x) {
       rgba = ppng.getPixel(x, y);
       if (options.natural) {
-        closest = {"name": "-original-", "rgb": [rgba.r, rgba.g , rgba.b ,"+"], "symbol": "_"};
+        closest = PPng.Color.create([rgba.r, rgba.g, rgba.b], "-original-", "_");
       }
       else {
+        console.log("-- find closest to %s", JSON.stringify(rgba));
         closest = findClosest(rgba, palette);
       }
-      if (!closest.rgb) {
-        ppng.setPixel(x, y, {
-           "a": 128
-        });
-        continue;
-      }
-      var data = {
-        "rgb": {
-          "r": closest.rgb[0]
-          , "g": closest.rgb[1]
-          , "b": closest.rgb[2]
-        }
-        , "name": closest.name
-        , "symbol": closest.symbol
-      };
-      ppng.setPixel(x, y, data);
+      ppng.setPixel(x, y, closest);
     }
   }
   ppng.write(options.out, cb, options.html);
@@ -144,16 +131,11 @@ function findClosest(rgba, palette) {
   for (var key in palette) {
     (tmp = difference([rgba.r, rgba.g, rgba.b], palette[key])) < diff && (result = key, diff = tmp);
   }
-  var code = palette[result];
-  return {
-    "name": result
-    , "rgb": code
-    , "symbol": code[3]
-  };
+  return palette[result];
 }
 
 function difference (color, candidate) {
-  return Math.pow(((candidate[0]-color[0])*0.30), 2)
-    + Math.pow(((candidate[1]-color[1])*0.59), 2)
-    + Math.pow(((candidate[2]-color[2])*0.45), 2);
+  return Math.pow(((candidate.rgba.r-color[0])*0.30), 2)
+    + Math.pow(((candidate.rgba.g-color[1])*0.59), 2)
+    + Math.pow(((candidate.rgba.b-color[2])*0.45), 2);
 }
