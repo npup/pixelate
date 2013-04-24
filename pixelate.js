@@ -7,27 +7,56 @@ var fs = require("fs")
   , PNG = require("pngjs").PNG
   , PPng = require("./lib/ppng");
 
+
+var Palette = (function () {
+  function Palette() {
+    var instance = this;
+    instance.colors = {};
+  }
+  Palette.prototype = {
+    "constructor": Palette
+    , "set": function (rgb, name, symbol) {
+      var instance = this;
+      instance.colors[name] = PPng.Color.create(rgb, name, symbol);
+      return instance;
+    }
+    , "get": function (name) {
+      return this[name];
+    }
+  };
+  return {
+    "create": function (rgb, name, symbol) {
+      var instance = new Palette();
+      return instance.set(rgb, name, symbol);
+    }
+  };
+})();
+
+
 var palettes = {
-  "gray": {
-    "black": PPng.Color.create([0, 0, 0], "black", "a")
-    , "dark-gray1": PPng.Color.create([32, 32, 32], "dark-gray1", "b")
-    , "dark-gray2": PPng.Color.create([64, 64, 64], "dark-gray2", "c")
-    , "dark-gray3": PPng.Color.create([96, 96, 96], "dark-gray3", "d")
-    , "medium-gray1": PPng.Color.create([127, 127, 127], "medium-gray1", "e")
-    , "medium-gray2": PPng.Color.create([168, 168, 168], "medium-gray2", "f")
-    , "medium-gray3": PPng.Color.create([180, 180, 180], "medium-gray3", "g")
-    , "light-gray": PPng.Color.create([192, 192, 192], "light-gray", "g")
-    , "very-light-gray": PPng.Color.create([224, 224, 224], "very-light-gray", "i")
-    , "white": PPng.Color.create([255, 255, 255], "white", "j")
-    , "blue": PPng.Color.create([40, 50, 90], "blue", "k")
-  }
-  , "blue": {
-    "blue-dark": PPng.Color.create([64, 64, 248], "blue-dark", "a")
-    , "blue-medium-dark": PPng.Color.create([128, 128, 248], "blue-medium-dark", "b")
-    , "blue-medium": PPng.Color.create([168, 168, 248], "blue-medium", "c")
-    , "blue-light": PPng.Color.create([192, 192, 248], "blue-light", "d")
-    , "blue-very-light": PPng.Color.create([224, 224, 248], "blue-very-light", "e")
-  }
+  "gray": Palette.create([10, 10, 10], "black", "a")
+    .set([32, 32, 32], "dark-gray1", "b")
+    .set([64, 64, 64], "dark-gray2", "c")
+    .set([96, 96, 96], "dark-gray3", "d")
+    .set([127, 127, 127], "medium-gray1", "e")
+    .set([168, 168, 168], "medium-gray2", "f")
+    .set([180, 180, 180], "medium-gray3", "g")
+    .set([192, 192, 192], "light-gray1", "h")
+    .set([224, 224, 224], "light-gray2", "i")
+    .set([242, 242, 242], "light-gray3", "j")
+    .set([253, 253, 253], "white", "k")
+    .set([40, 50, 90], "blue", "l").colors
+  , "blue": Palette.create([5, 5, 10], "black", "a")
+    .set([16, 16, 32], "dark-blue1", "b")
+    .set([32, 32, 64], "dark-blue2", "c")
+    .set([48, 48, 96], "dark-blue3", "d")
+    .set([63, 63, 127], "medium-blue1", "e")
+    .set([84, 84, 168], "medium-blue2", "f")
+    .set([90, 90, 180], "medium-blue3", "g")
+    .set([86, 86, 192], "light-blue1", "h")
+    .set([112, 112, 224], "light-blue2", "i")
+    .set([121, 121, 242], "light-blue3", "j")
+    .set([253, 253, 253], "white", "k").colors
 };
 
 prg
