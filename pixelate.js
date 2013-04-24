@@ -18,11 +18,11 @@ var palettes = {
     , "blue": PPng.Color.create([40, 50, 90], "blue", "k")
   }
   , "blue": {
-    "blue-dark": [64, 64, 248, "0"]
-    , "blue-medium-dark": [128, 128, 248, "1"]
-    , "blue-medium": [168, 168, 248, "2"]
-    , "blue-light": [192, 192, 248, "3"]
-    , "blue-very-light": [224, 224, 248, "4"]
+    "blue-dark": PPng.Color.create([64, 64, 248], "blue-dark", "a")
+    , "blue-medium-dark": PPng.Color.create([128, 128, 248], "blue-medium-dark", "b")
+    , "blue-medium": PPng.Color.create([168, 168, 248], "blue-medium", "c")
+    , "blue-light": PPng.Color.create([192, 192, 248], "blue-light", "d")
+    , "blue-very-light": PPng.Color.create([224, 224, 248], "blue-very-light", "e")
   }
 };
 
@@ -117,7 +117,6 @@ function processPPng(ppng, palette, cb) {
         closest = PPng.Color.create([rgba.r, rgba.g, rgba.b], "-original-", "_");
       }
       else {
-        console.log("-- find closest to %s", JSON.stringify(rgba));
         closest = findClosest(rgba, palette);
       }
       ppng.setPixel(x, y, closest);
