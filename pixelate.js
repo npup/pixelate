@@ -35,7 +35,6 @@ prg
   .option("-f, --file [file]", "png file to process", "image.png")
   .option("-r, --ratio [ratio]", "pixel ratio", parseInt, 1)
   .option("-o, --out [out]", "output file name")
-  .option("-h, --html", "pattern as HTML file")
   .option("-n, --natural", "use natural (closest) color instead of using a palette constraint")
   .parse(process.argv);
 
@@ -68,7 +67,6 @@ var options = {
   "ratio": prg.ratio
   , "file": prg.file
   , "out": prg.out
-  , "html": "html" in prg
   , "natural": "natural" in prg
 };
 
@@ -130,7 +128,7 @@ function processPPng(ppng, palette, cb) {
       ppng.setPixel(x, y, closest);
     }
   }
-  ppng.write(options.out, cb, options.html);
+  ppng.write(options.out, cb);
 }
 
 function findClosest(rgba, palette) {
