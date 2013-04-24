@@ -1,3 +1,7 @@
+/*
+  TODO:
+    - enable getting palettes from a conf file
+*/
 var fs = require("fs")
   , prg = require("commander")
   , PNG = require("pngjs").PNG
@@ -55,7 +59,7 @@ if ("string" != typeof prg.out || prg.out.length < 1) {
   // build name from input file
   prg.out = (function (path) {
     var nameParts = (/^(.*)(\.png)$/).exec(path.substring(path.lastIndexOf("/")+1));
-    return [nameParts[1], "-pixelated-r", prg.ratio, nameParts[2] ].join("");
+    return [nameParts[1], "-pixelated-r", prg.ratio, "%palette%", nameParts[2]].join("");
   })(prg.file);
 }
 
@@ -84,6 +88,7 @@ function run(options, cb) {
 }
 
 function do_run(options) {
+  options.out = options.out.replace(/%palette%/, (options.natural?"":"-"+options.paletteName));
   run(options, function (ppng) {
     process.exit();
   });
@@ -100,7 +105,8 @@ function do_run(options) {
   console.log("Choose palette:");
   var choices = Object.keys(palettes);
   prg.choose(choices, function (idx) {
-    options.palette = palettes[choices[idx]];
+    options.paletteName = choices[idx];
+    options.palette = palettes[options.paletteName];
     do_run(options);
   });
 })();
@@ -114,7 +120,9 @@ function processPPng(ppng, palette, cb) {
     for (var x = 0; x < width; ++x) {
       rgba = ppng.getPixel(x, y);
       if (options.natural) {
-        closest = PPng.Color.create([rgba.r, rgba.g, rgba.b], "-original-", "_");
+        closest = rgba;
+        closest.name = null;
+        closest.symbol = "_";
       }
       else {
         closest = findClosest(rgba, palette);
@@ -128,13 +136,20 @@ function processPPng(ppng, palette, cb) {
 function findClosest(rgba, palette) {
   var diff = Number.MAX_VALUE, tmp, result;
   for (var key in palette) {
-    (tmp = difference([rgba.r, rgba.g, rgba.b], palette[key])) < diff && (result = key, diff = tmp);
+    (tmp = difference(rgba, palette[key])) < diff && (result = key, diff = tmp);
   }
   return palette[result];
 }
 
 function difference (color, candidate) {
-  return Math.pow(((candidate.rgba.r-color[0])*0.30), 2)
-    + Math.pow(((candidate.rgba.g-color[1])*0.59), 2)
-    + Math.pow(((candidate.rgba.b-color[2])*0.45), 2);
+  var weights = {
+    "r": .3
+    , "g": .59
+    , "b": .45
+  }
+  , result = 0;
+  for (var prop in weights) {
+    result += Math.pow((candidate.rgba[prop]-color.rgba[prop])*weights[prop] , 2);
+  }
+  return result;
 }
