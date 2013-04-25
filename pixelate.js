@@ -9,8 +9,9 @@ var fs = require("fs")
 
 
 var Palette = (function () {
-  function Palette() {
+  function Palette(name) {
     var instance = this;
+    this.name = name;
     instance.colors = {};
   }
   Palette.prototype = {
@@ -23,18 +24,34 @@ var Palette = (function () {
     , "get": function (name) {
       return this[name];
     }
+    , "findClosest": function (color) {
+      var instance = this
+        , colors = instance.colors;
+      var diff = Number.MAX_VALUE, tmp, result;
+      for (var key in colors) {
+        (tmp = color.compareTo(colors[key])) < diff && (result = key, diff = tmp);
+      }
+      return colors[result];
+    }
   };
   return {
-    "create": function (rgb, name, symbol) {
-      var instance = new Palette();
-      return instance.set(rgb, name, symbol);
+    "create": function (name) {
+      return new Palette(name);
     }
   };
 })();
 
 
-var palettes = {
-  "gray": Palette.create([10, 10, 10], "black", "a")
+var palettes = (function (paletteArray) {
+  var palettes = {};
+  for (var idx=0, len=paletteArray.length, palette; idx<len; ++idx) {
+    palette = paletteArray[idx];
+    palettes[palette.name] = palette;
+  }
+  return palettes;
+})([
+  Palette.create("gray")
+    .set([10, 10, 10], "black", "a")
     .set([32, 32, 32], "dark-gray1", "b")
     .set([64, 64, 64], "dark-gray2", "c")
     .set([96, 96, 96], "dark-gray3", "d")
@@ -45,8 +62,9 @@ var palettes = {
     .set([224, 224, 224], "light-gray2", "i")
     .set([242, 242, 242], "light-gray3", "j")
     .set([253, 253, 253], "white", "k")
-    .set([40, 50, 90], "blue", "l").colors
-  , "blue": Palette.create([5, 5, 10], "black", "a")
+    .set([40, 50, 90], "blue", "l")
+  , Palette.create("blue")
+    .set([5, 5, 10], "black", "a")
     .set([16, 16, 32], "dark-blue1", "b")
     .set([32, 32, 64], "dark-blue2", "c")
     .set([48, 48, 96], "dark-blue3", "d")
@@ -56,8 +74,10 @@ var palettes = {
     .set([86, 86, 192], "light-blue1", "h")
     .set([112, 112, 224], "light-blue2", "i")
     .set([121, 121, 242], "light-blue3", "j")
-    .set([253, 253, 253], "white", "k").colors
-};
+    .set([253, 253, 253], "white", "k")
+  ]
+);
+
 
 prg
   .version("0.0.1")
@@ -115,7 +135,7 @@ function run(options, cb) {
 }
 
 function do_run(options) {
-  options.out = options.out.replace(/%palette%/, (options.natural?"":"-"+options.paletteName));
+  options.out = options.out.replace(/%palette%/, (options.natural?"":"-"+options.palette.name));
   run(options, function (ppng) {
     process.exit();
   });
@@ -132,8 +152,7 @@ function do_run(options) {
   console.log("Choose palette:");
   var choices = Object.keys(palettes);
   prg.choose(choices, function (idx) {
-    options.paletteName = choices[idx];
-    options.palette = palettes[options.paletteName];
+    options.palette = palettes[choices[idx]];
     do_run(options);
   });
 })();
@@ -152,31 +171,10 @@ function processPPng(ppng, palette, cb) {
         closest.symbol = "_";
       }
       else {
-        closest = findClosest(rgba, palette);
+        closest = palette.findClosest(rgba);
       }
       ppng.setPixel(x, y, closest);
     }
   }
   ppng.write(options.out, cb);
-}
-
-function findClosest(rgba, palette) {
-  var diff = Number.MAX_VALUE, tmp, result;
-  for (var key in palette) {
-    (tmp = difference(rgba, palette[key])) < diff && (result = key, diff = tmp);
-  }
-  return palette[result];
-}
-
-function difference (color, candidate) {
-  var weights = {
-    "r": .3
-    , "g": .59
-    , "b": .45
-  }
-  , result = 0;
-  for (var prop in weights) {
-    result += Math.pow((candidate.rgba[prop]-color.rgba[prop])*weights[prop] , 2);
-  }
-  return result;
 }
