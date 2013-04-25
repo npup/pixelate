@@ -5,68 +5,8 @@
 var fs = require("fs")
   , prg = require("commander")
   , PNG = require("pngjs").PNG
-  , PPng = require("./lib/ppng");
-
-
-var Palette = (function () {
-  function Palette(name) {
-    var instance = this;
-    this.name = name;
-    instance.colors = {};
-  }
-  Palette.prototype = {
-    "constructor": Palette
-    , "set": function (rgb, name, symbol) {
-      var instance = this;
-      instance.colors[name] = PPng.Color.create(rgb, name, symbol);
-      return instance;
-    }
-    , "get": function (name) {
-      return this[name];
-    }
-    , "findClosest": function (color) {
-      var instance = this
-        , colors = instance.colors;
-      var diff = Number.MAX_VALUE, tmp, result;
-      for (var key in colors) {
-        (tmp = color.compareTo(colors[key])) < diff && (result = key, diff = tmp);
-      }
-      return colors[result];
-    }
-  };
-
-  var Collection = (function () {
-    function Collection() {
-      var instance = this;
-      instance.palettes = {};
-    }
-    Collection.prototype = {
-      "constructor": Collection
-      , "add": function (palette) {
-        var instance = this;
-        instance.palettes[palette.name] = palette;
-        return instance;
-      }
-      , "get": function (name) {
-        return this.palettes[name];
-      }
-      , "getNames": function () {
-        return Object.keys(this.palettes);
-      }
-    };
-    return {
-      "create": function () {
-        return new Collection();
-      }
-    };
-  })();
-  return {
-    "create": function (name) {
-      return new Palette(name);
-    }
-    , "Collection": Collection
-  };
-})();
+  , PPng = require("./lib/ppng")
+  , Palette = PPng.Color.Palette;
 
 var palettes = Palette.Collection.create()
   .add(Palette.create("gray")
