@@ -37,6 +37,7 @@ var palettes = Palette.Collection.create()
     .set([253, 253, 253], "white", "k")
 );
 
+// manage processing flags
 prg
   .version("0.0.1")
   .option("-f, --file [file]", "png file to process", "image.png")
@@ -69,7 +70,7 @@ if ("string" != typeof prg.out || prg.out.length < 1) {
   })(prg.file);
 }
 
-// build options to use later
+// build options from processing flags
 var options = {
   "ratio": prg.ratio
   , "file": prg.file
@@ -77,49 +78,12 @@ var options = {
   , "natural": "natural" in prg
 };
 
-
-
-function run(options, cb) {
-  console.log("-- opening file "+options.file);
-  fs.createReadStream(options.file).on("error", function (err) {
-    console.error("#error: "+err);
-  }).pipe(new PNG({
-    "filterType": 4
-  })).on("parsed", function () {
-    console.log("-- processing...");
-    var ppng = PPng.create(this, options.ratio);
-    processPPng(ppng, options.palette, cb);
-  });
-}
-
-function do_run(options) {
-  options.out = options.out.replace(/%palette%/, (options.natural?"":"-"+options.palette.name));
-  run(options, function (ppng) {
-    process.exit();
-  });
-}
-
-
-(function () {
-  // use natural colors
-  if (options.natural) {
-    do_run(options);
-    return;
-  }
-  // choose palette and do processing
-  console.log("Choose palette:");
-  var names = palettes.getNames();
-  prg.choose(names, function (idx) {
-    options.palette = palettes.get(names[idx]);
-    do_run(options);
-  });
-})();
-
-
-function processPPng(ppng, palette, cb) {
+// process image
+function processPPng(ppng, options, cb) {
   var width = Math.ceil(ppng.getWidth())
     , height = Math.ceil(ppng.getHeight())
-    , rgba, closest = {};
+    , rgba, closest = {}
+    , palette = options.palette;
   for (var y = 0; y < height; ++y) {
     for (var x = 0; x < width; ++x) {
       rgba = ppng.getPixel(x, y);
@@ -135,4 +99,39 @@ function processPPng(ppng, palette, cb) {
     }
   }
   ppng.write(options.out, cb);
+}
+
+// open image for processing
+function run(options, cb) {
+  console.log("-- opening file "+options.file);
+  fs.createReadStream(options.file).on("error", function (err) {
+    console.error("#error: "+err);
+  }).pipe(new PNG({
+    "filterType": 4
+  })).on("parsed", function () {
+    console.log("-- processing...");
+    var ppng = PPng.create(this, options.ratio);
+    processPPng(ppng, options, cb);
+  });
+}
+
+// prepare for running, and run
+function do_run(options) {
+  options.out = options.out.replace(/%palette%/, (options.natural?"":"-"+options.palette.name));
+  run(options, function (/*ppng*/) {
+    process.exit();
+  });
+}
+
+// Kick everything into motion
+if (options.natural) { // use "natural" colors
+  do_run(options);
+}
+else { // need to choose palette to use
+  console.log("Choose palette:");
+  var paletteNames = palettes.getNames();
+  prg.choose(paletteNames, function (idx) {
+    options.palette = palettes.get(paletteNames[idx]);
+    do_run(options);
+  });
 }
