@@ -8,7 +8,7 @@ var fs = require("fs")
   , PPng = require("./lib/ppng")
   , Palette = PPng.Color.Palette;
 
-var palettes = Palette.Collection.create()
+var palettes = Palette.Collection.create("name")
   .add(Palette.create("gray")
     .set([10, 10, 10], "black", "a")
     .set([32, 32, 32], "dark-gray1", "b")
