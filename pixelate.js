@@ -51,7 +51,6 @@ var Palette = (function () {
         return this.palettes[name];
       }
       , "getNames": function () {
-        console.log(JSON.stringify(this.palettes));
         return Object.keys(this.palettes);
       }
     };
