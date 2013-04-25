@@ -34,23 +34,43 @@ var Palette = (function () {
       return colors[result];
     }
   };
+
+  var Collection = (function () {
+    function Collection() {
+      var instance = this;
+      instance.palettes = {};
+    }
+    Collection.prototype = {
+      "constructor": Collection
+      , "add": function (palette) {
+        var instance = this;
+        instance.palettes[palette.name] = palette;
+        return instance;
+      }
+      , "get": function (name) {
+        return this.palettes[name];
+      }
+      , "getNames": function () {
+        console.log(JSON.stringify(this.palettes));
+        return Object.keys(this.palettes);
+      }
+    };
+    return {
+      "create": function () {
+        return new Collection();
+      }
+    };
+  })();
   return {
     "create": function (name) {
       return new Palette(name);
     }
+    , "Collection": Collection
   };
 })();
 
-
-var palettes = (function (paletteArray) {
-  var palettes = {};
-  for (var idx=0, len=paletteArray.length, palette; idx<len; ++idx) {
-    palette = paletteArray[idx];
-    palettes[palette.name] = palette;
-  }
-  return palettes;
-})([
-  Palette.create("gray")
+var palettes = Palette.Collection.create()
+  .add(Palette.create("gray")
     .set([10, 10, 10], "black", "a")
     .set([32, 32, 32], "dark-gray1", "b")
     .set([64, 64, 64], "dark-gray2", "c")
@@ -63,7 +83,8 @@ var palettes = (function (paletteArray) {
     .set([242, 242, 242], "light-gray3", "j")
     .set([253, 253, 253], "white", "k")
     .set([40, 50, 90], "blue", "l")
-  , Palette.create("blue")
+  )
+  .add(Palette.create("blue")
     .set([5, 5, 10], "black", "a")
     .set([16, 16, 32], "dark-blue1", "b")
     .set([32, 32, 64], "dark-blue2", "c")
@@ -75,9 +96,7 @@ var palettes = (function (paletteArray) {
     .set([112, 112, 224], "light-blue2", "i")
     .set([121, 121, 242], "light-blue3", "j")
     .set([253, 253, 253], "white", "k")
-  ]
 );
-
 
 prg
   .version("0.0.1")
@@ -150,9 +169,9 @@ function do_run(options) {
   }
   // choose palette and do processing
   console.log("Choose palette:");
-  var choices = Object.keys(palettes);
-  prg.choose(choices, function (idx) {
-    options.palette = palettes[choices[idx]];
+  var names = palettes.getNames();
+  prg.choose(names, function (idx) {
+    options.palette = palettes.get(names[idx]);
     do_run(options);
   });
 })();
